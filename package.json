@@ -1,7 +1,7 @@
 {
   "name": "youtube-video-summarizer-mcp-pydanticai",
-  "version": "1.0.0",
-  "description": "An MCP server for YouTube video summarization with PydanticAI-compatible tool naming",
+  "version": "1.1.0",
+  "description": "Enhanced YouTube video summarizer MCP server with YouTube Data API v3, multiple fallbacks, and comprehensive error handling",
   "license": "MIT",
   "main": "dist/index.js",
   "type": "module",
@@ -40,10 +40,11 @@
   "homepage": "https://github.com/Carssou/youtube-video-summarizer-mcp-pydanticai#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",
+    "axios": "^1.6.8",
     "dotenv": "^16.4.7",
+    "googleapis": "^150.0.1",
     "youtube-caption-extractor": "^1.4.3",
     "ytdl-core": "^4.11.5",
-    "axios": "^1.6.8",
     "zod": "^3.24.2"
   },
   "devDependencies": {

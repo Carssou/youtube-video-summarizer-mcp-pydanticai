@@ -1,0 +1,99 @@
+import { z } from "zod";
+import { enhancedYouTubeClient } from "../clients/enhanced-youtube-client.js";
+import { ToolDefinition } from "../types/tool-definition.js";
+
+const toolName = "get_video_info";
+const toolDescription = "Get comprehensive information about a YouTube video including title, description, duration, captions, and access status";
+const toolSchema = {
+  videoUrl: z.string().describe("The URL or ID of the YouTube video"),
+  languageCode: z.string().describe("The language code for captions (optional, e.g., 'en', 'es', 'fr')").optional(),
+};
+
+const toolHandler = async (args: { videoUrl: string; languageCode?: string }, _extra: { signal: AbortSignal }) => {
+  const result = await enhancedYouTubeClient.getEnhancedVideoInfo(args.videoUrl, args.languageCode);
+
+  if (!result.success) {
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: `❌ **Error getting video info**: ${result.error}\n\n**Attempted methods**: ${result.fallbackUsed?.join(", ") || "None"}\n\n**Troubleshooting tips**:\n- Check if the video URL is correct\n- Ensure the video is public and accessible\n- Try with a different video to test the tool`,
+        },
+      ],
+    };
+  }
+
+  const videoInfo = result.data!;
+  
+  // Format captions text
+  let captionsText = "";
+  if (videoInfo.captionsAvailable && videoInfo.subtitles && videoInfo.subtitles.length > 0) {
+    captionsText = videoInfo.subtitles.map(subtitle => subtitle.text).join(". ");
+  }
+
+  // Create comprehensive response
+  let responseText = `# 📺 YouTube Video Information\n\n`;
+  
+  // Basic Info
+  responseText += `**🎬 Title**: ${videoInfo.title}\n\n`;
+  responseText += `**📺 Channel**: ${videoInfo.channelTitle}\n\n`;
+  responseText += `**⏱️ Duration**: ${videoInfo.duration}\n\n`;
+  responseText += `**📅 Published**: ${videoInfo.publishedAt}\n\n`;
+  
+  // Statistics (if available)
+  if (videoInfo.viewCount) {
+    responseText += `**👁️ Views**: ${parseInt(videoInfo.viewCount).toLocaleString()}\n\n`;
+  }
+  if (videoInfo.likeCount) {
+    responseText += `**👍 Likes**: ${parseInt(videoInfo.likeCount).toLocaleString()}\n\n`;
+  }
+  
+  // Access Status
+  const statusEmoji = {
+    'public': '🌍',
+    'unlisted': '🔗',
+    'private': '🔒',
+    'restricted': '⚠️',
+    'unknown': '❓'
+  };
+  responseText += `**${statusEmoji[videoInfo.accessStatus]} Access**: ${videoInfo.accessStatus.charAt(0).toUpperCase() + videoInfo.accessStatus.slice(1)}\n\n`;
+  
+  // Captions Status
+  if (videoInfo.captionsAvailable) {
+    responseText += `**📝 Captions**: ✅ Available (${videoInfo.subtitles?.length || 0} segments)\n\n`;
+  } else {
+    responseText += `**📝 Captions**: ❌ Not available\n\n`;
+  }
+  
+  // Description
+  responseText += `**📄 Description**:\n${videoInfo.description}\n\n`;
+  
+  // Captions (if available)
+  if (videoInfo.captionsAvailable && captionsText) {
+    responseText += `**📋 Captions/Transcript**:\n${captionsText}\n\n`;
+  }
+  
+  // Technical Info
+  responseText += `**🔧 Extraction Methods Used**: ${result.fallbackUsed?.join(" → ") || "Unknown"}\n\n`;
+  
+  // Thumbnails
+  if (videoInfo.thumbnails.high) {
+    responseText += `**🖼️ Thumbnail**: ${videoInfo.thumbnails.high}\n\n`;
+  }
+
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: responseText,
+      },
+    ],
+  };
+};
+
+export const EnhancedGetVideoInfoTool: ToolDefinition<typeof toolSchema> = {
+  name: toolName,
+  description: toolDescription,
+  schema: toolSchema,
+  handler: toolHandler,
+};

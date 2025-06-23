@@ -2,7 +2,7 @@
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { YouTubeMcpServer } from "./server/youtube-mcp-server.js";
-import { GetVideoInfoTool } from "./tools/get-video-info.tool.js";
+import { EnhancedGetVideoInfoTool } from "./tools/enhanced-get-video-info.tool.js";
 import { RegisterTool } from "./helpers/register-tool.js";
 import { getPackageVersion } from "./helpers/get-package-version.js";
 
@@ -29,10 +29,10 @@ const main = async () => {
   const server = YouTubeMcpServer.GetServer();
 
   // Register all tools
-  RegisterTool(server, GetVideoInfoTool);
+  RegisterTool(server, EnhancedGetVideoInfoTool);
 
   console.error("Registered tools:");
-  console.error("- get_video_info: Get basic information about a YouTube video");
+  console.error("- get_video_info: Get comprehensive information about a YouTube video (enhanced)");
 
   // Start receiving messages on stdin and sending messages on stdout
   const transport = new StdioServerTransport();
