@@ -1,12 +1,12 @@
 {
-  "name": "youtube-video-summarizer-mcp",
-  "version": "1.0.7",
-  "description": "An MCP server for YouTube video summarization with Claude",
+  "name": "youtube-video-summarizer-mcp-pydanticai",
+  "version": "1.0.0",
+  "description": "An MCP server for YouTube video summarization with PydanticAI-compatible tool naming",
   "license": "MIT",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "youtube-video-summarizer": "./dist/index.js"
+    "youtube-video-summarizer-pydanticai": "./dist/index.js"
   },
   "files": [
     "dist"
@@ -31,13 +31,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nabid-pf/youtube-video-summarizer-mcp.git"
+    "url": "git+https://github.com/Carssou/youtube-video-summarizer-mcp-pydanticai.git"
   },
-  "author": "Nabid Salehin <nabid@peakflo.co>",
+  "author": "Ludovic Carceles (fork of original by Nabid Salehin <nabid@peakflo.co>)",
   "bugs": {
-    "url": "https://github.com/nabid-pf/youtube-video-summarizer-mcp/issues"
+    "url": "https://github.com/Carssou/youtube-video-summarizer-mcp-pydanticai/issues"
   },
-  "homepage": "https://github.com/nabid-pf/youtube-video-summarizer-mcp#readme",
+  "homepage": "https://github.com/Carssou/youtube-video-summarizer-mcp-pydanticai#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",
     "dotenv": "^16.4.7",

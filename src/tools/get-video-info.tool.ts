@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getYouTubeVideoInfo } from "../handlers/get-video-info.handler.js";
 import { ToolDefinition } from "../types/tool-definition.js";
 
-const toolName = "get-video-info-for-summary-from-url";
+const toolName = "get_video_info";
 const toolDescription = "Get title, description, duration, and captions of a YouTube video from a URL";
 const toolSchema = {
   videoUrl: z.string().describe("The URL or ID of the YouTube video"),

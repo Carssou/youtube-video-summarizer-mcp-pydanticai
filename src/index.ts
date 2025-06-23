@@ -32,7 +32,7 @@ const main = async () => {
   RegisterTool(server, GetVideoInfoTool);
 
   console.error("Registered tools:");
-  console.error("- get-video-info: Get basic information about a YouTube video");
+  console.error("- get_video_info: Get basic information about a YouTube video");
 
   // Start receiving messages on stdin and sending messages on stdout
   const transport = new StdioServerTransport();
