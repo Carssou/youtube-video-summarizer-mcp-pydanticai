@@ -44,6 +44,7 @@
     "dotenv": "^16.4.7",
     "googleapis": "^150.0.1",
     "youtube-caption-extractor": "^1.4.3",
+    "yt-dlp-wrap": "^2.3.12",
     "ytdl-core": "^4.11.5",
     "zod": "^3.24.2"
   },
