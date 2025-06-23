@@ -28,11 +28,19 @@ const main = async () => {
   // Create an MCP server
   const server = YouTubeMcpServer.GetServer();
 
-  // Register all tools
+  // Register all tools with universal compatibility (both naming conventions)
   RegisterTool(server, EnhancedGetVideoInfoTool);
+  
+  // Also register with hyphen naming for compatibility with other MCP clients
+  const HyphenVersionTool = {
+    ...EnhancedGetVideoInfoTool,
+    name: "get-video-info"
+  };
+  RegisterTool(server, HyphenVersionTool);
 
   console.error("Registered tools:");
-  console.error("- get_video_info: Get comprehensive information about a YouTube video (enhanced)");
+  console.error("- get_video_info: Get comprehensive YouTube video data (PydanticAI compatible)");
+  console.error("- get-video-info: Get comprehensive YouTube video data (standard MCP compatible)");
 
   // Start receiving messages on stdin and sending messages on stdout
   const transport = new StdioServerTransport();

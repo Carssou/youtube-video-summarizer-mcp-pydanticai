@@ -3,7 +3,7 @@ import { enhancedYouTubeClient } from "../clients/enhanced-youtube-client.js";
 import { ToolDefinition } from "../types/tool-definition.js";
 
 const toolName = "get_video_info";
-const toolDescription = "Get comprehensive information about a YouTube video including title, description, duration, captions, and access status";
+const toolDescription = "Extract comprehensive YouTube video data including metadata, captions/transcripts, and technical details. Returns structured data for intelligent analysis, summarization, or note creation. When captions are available, provides full transcript for content analysis. When unavailable, returns rich metadata for description-based analysis. Use this data to create summaries, identify key points, generate study notes, or assess video accessibility.";
 const toolSchema = {
   videoUrl: z.string().describe("The URL or ID of the YouTube video"),
   languageCode: z.string().describe("The language code for captions (optional, e.g., 'en', 'es', 'fr')").optional(),
@@ -13,11 +13,26 @@ const toolHandler = async (args: { videoUrl: string; languageCode?: string }, _e
   const result = await enhancedYouTubeClient.getEnhancedVideoInfo(args.videoUrl, args.languageCode);
 
   if (!result.success) {
+    // Return structured error data for agent to handle
+    const errorData = {
+      success: false,
+      error: result.error,
+      attemptedMethods: result.fallbackUsed || [],
+      troubleshooting: {
+        suggestions: [
+          "Verify the video URL is correct",
+          "Check if the video is public and accessible", 
+          "Try with a different video to test connectivity",
+          "Ensure you have proper API keys configured if needed"
+        ]
+      }
+    };
+
     return {
       content: [
         {
           type: "text" as const,
-          text: `❌ **Error getting video info**: ${result.error}\n\n**Attempted methods**: ${result.fallbackUsed?.join(", ") || "None"}\n\n**Troubleshooting tips**:\n- Check if the video URL is correct\n- Ensure the video is public and accessible\n- Try with a different video to test the tool`,
+          text: JSON.stringify(errorData, null, 2),
         },
       ],
     };
@@ -25,72 +40,59 @@ const toolHandler = async (args: { videoUrl: string; languageCode?: string }, _e
 
   const videoInfo = result.data!;
   
-  // Format captions text
+  // Format captions as clean text
   let captionsText = "";
   if (videoInfo.captionsAvailable && videoInfo.subtitles && videoInfo.subtitles.length > 0) {
-    captionsText = videoInfo.subtitles.map(subtitle => subtitle.text).join(". ");
+    captionsText = videoInfo.subtitles.map(subtitle => subtitle.text).join(" ");
   }
 
-  // Create comprehensive response
-  let responseText = `# 📺 YouTube Video Information\n\n`;
-  
-  // Basic Info
-  responseText += `**🎬 Title**: ${videoInfo.title}\n\n`;
-  responseText += `**📺 Channel**: ${videoInfo.channelTitle}\n\n`;
-  responseText += `**⏱️ Duration**: ${videoInfo.duration}\n\n`;
-  responseText += `**📅 Published**: ${videoInfo.publishedAt}\n\n`;
-  
-  // Statistics (if available)
-  if (videoInfo.viewCount) {
-    responseText += `**👁️ Views**: ${parseInt(videoInfo.viewCount).toLocaleString()}\n\n`;
-  }
-  if (videoInfo.likeCount) {
-    responseText += `**👍 Likes**: ${parseInt(videoInfo.likeCount).toLocaleString()}\n\n`;
-  }
-  
-  // Access Status
-  const statusEmoji = {
-    'public': '🌍',
-    'unlisted': '🔗',
-    'private': '🔒',
-    'restricted': '⚠️',
-    'unknown': '❓'
+  // Return structured data for agent analysis
+  const structuredData = {
+    success: true,
+    basic: {
+      id: videoInfo.id,
+      title: videoInfo.title,
+      channel: videoInfo.channelTitle,
+      duration: videoInfo.duration,
+      publishedAt: videoInfo.publishedAt,
+      url: `https://www.youtube.com/watch?v=${videoInfo.id}`,
+    },
+    statistics: {
+      viewCount: videoInfo.viewCount ? parseInt(videoInfo.viewCount) : null,
+      likeCount: videoInfo.likeCount ? parseInt(videoInfo.likeCount) : null,
+    },
+    access: {
+      status: videoInfo.accessStatus,
+      isPublic: videoInfo.accessStatus === 'public',
+    },
+    content: {
+      description: videoInfo.description,
+      captions: {
+        available: videoInfo.captionsAvailable,
+        count: videoInfo.subtitles?.length || 0,
+        transcript: captionsText,
+        language: args.languageCode || 'auto-detected',
+      }
+    },
+    technical: {
+      extractionMethods: result.fallbackUsed || [],
+      thumbnails: videoInfo.thumbnails,
+    },
+    analysis: {
+      canSummarize: videoInfo.captionsAvailable && captionsText.length > 0,
+      contentLength: captionsText.length,
+      descriptionLength: videoInfo.description?.length || 0,
+      recommendedApproach: videoInfo.captionsAvailable 
+        ? "Full content analysis using transcript"
+        : "Metadata and description-based analysis only",
+    }
   };
-  responseText += `**${statusEmoji[videoInfo.accessStatus]} Access**: ${videoInfo.accessStatus.charAt(0).toUpperCase() + videoInfo.accessStatus.slice(1)}\n\n`;
-  
-  // Captions Status with clear warning
-  if (videoInfo.captionsAvailable) {
-    responseText += `**📝 Captions**: ✅ Available (${videoInfo.subtitles?.length || 0} segments)\n\n`;
-  } else {
-    responseText += `**📝 Captions**: ❌ Not available\n\n`;
-    responseText += `⚠️ **Note**: This video has no accessible captions/transcript. Summarization is limited to video description and metadata only. For detailed content analysis, captions are required.\n\n`;
-  }
-  
-  // Description
-  responseText += `**📄 Description**:\n${videoInfo.description}\n\n`;
-  
-  // Captions (if available)
-  if (videoInfo.captionsAvailable && captionsText) {
-    responseText += `**📋 Captions/Transcript**:\n${captionsText}\n\n`;
-  }
-  
-  // Technical Info
-  responseText += `**🔧 Extraction Methods Used**: ${result.fallbackUsed?.join(" → ") || "Unknown"}\n\n`;
-  
-  // Thumbnails
-  if (videoInfo.thumbnails.high) {
-    responseText += `**🖼️ Thumbnail**: ${videoInfo.thumbnails.high}\n\n`;
-  }
-
-  // Note creation suggestion
-  const noteTitle = `${videoInfo.title} - Generated by Assistant`;
-  responseText += `**📝 Suggested Note Title**: "${noteTitle}"\n\n`;
 
   return {
     content: [
       {
         type: "text" as const,
-        text: responseText,
+        text: JSON.stringify(structuredData, null, 2),
       },
     ],
   };
